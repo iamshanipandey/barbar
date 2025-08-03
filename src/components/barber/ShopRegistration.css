@@ -1,0 +1,868 @@
+.shop-registration-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 2rem 1rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.shop-registration-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.shop-registration-container {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.shop-registration-form {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 3rem;
+  color: #fff;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-registration-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f59e0b, #3b82f6, #10b981, #f59e0b);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
+.shop-registration-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.shop-registration-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 2px;
+}
+
+.form-subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+  font-weight: 400;
+}
+
+.form-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.input-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f59e0b;
+  margin-bottom: 0.8rem;
+  display: block;
+  position: relative;
+}
+
+.required-asterisk {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.shop-registration-form input,
+.shop-registration-form textarea {
+  width: 100%;
+  padding: 1.2rem 1.5rem;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+.shop-registration-form input:focus,
+.shop-registration-form textarea:focus {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+  box-shadow: 
+    0 0 0 4px rgba(245, 158, 11, 0.1),
+    0 8px 25px rgba(245, 158, 11, 0.15);
+  transform: translateY(-2px);
+}
+
+.shop-registration-form input::placeholder,
+.shop-registration-form textarea::placeholder {
+  color: #94a3b8;
+}
+
+.textarea-group {
+  grid-column: 1 / -1;
+}
+
+.shop-registration-form textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+}
+
+.image-upload-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px dashed rgba(245, 158, 11, 0.3);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.image-upload-section:hover {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.image-input {
+  display: none;
+}
+
+.image-upload-btn {
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #f59e0b;
+  background: transparent;
+  color: #f59e0b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1rem;
+}
+
+.image-upload-btn:hover {
+  background: #f59e0b;
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+}
+
+.image-upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.image-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(245, 158, 11, 0.2);
+  border-top: 4px solid #f59e0b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  transition: all 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.image-upload-hint {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.timing-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shop-registration-btn {
+  width: 100%;
+  padding: 1.4rem 0;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  color: #000;
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  margin-top: 2rem;
+}
+
+.shop-registration-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.shop-registration-btn:hover::before {
+  left: 100%;
+}
+
+.shop-registration-btn:hover {
+  background-position: 100% 0;
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.4);
+}
+
+.shop-registration-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.shop-registration-error {
+  background: linear-gradient(135deg, #fecaca 0%, #fee2e2 100%);
+  color: #991b1b;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  font-weight: 600;
+  border: 1px solid #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.success-message {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  color: #065f46;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  font-weight: 600;
+  border: 1px solid #a7f3d0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.registration-footer {
+  text-align: center;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.registration-footer p {
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.back-to-dashboard-btn {
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  background: transparent;
+  color: #f59e0b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.back-to-dashboard-btn:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: #f59e0b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .shop-registration-form {
+    padding: 2rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 2.2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .image-preview img {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .section-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .shop-registration-bg {
+    padding: 1rem 0.5rem;
+  }
+  
+  .shop-registration-form {
+    padding: 1.5rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 1.8rem;
+  }
+  
+  .form-section {
+    margin-bottom: 2rem;
+  }
+  
+  .shop-registration-form input,
+  .shop-registration-form textarea {
+    padding: 1rem;
+  }
+}
+
+/* Animation for form elements */
+.input-group {
+  animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for form rows */
+.form-row:nth-child(1) { animation-delay: 0.1s; }
+.form-row:nth-child(2) { animation-delay: 0.2s; }
+.form-row:nth-child(3) { animation-delay: 0.3s; }
+.shop-registration-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 6rem 2rem 4rem 2rem; /* Top padding increased for navbar space */
+  position: relative;
+  overflow-x: hidden;
+}
+
+.shop-registration-container {
+  max-width: 1200px; /* Increased from 900px */
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.shop-registration-form {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 4rem; /* Increased padding */
+  color: #fff;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: none; /* Remove max-width restriction */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem; /* Increased gap */
+  margin-bottom: 2.5rem;
+}
+
+.form-section {
+  margin-bottom: 3rem; /* Increased margin */
+}
+
+.shop-registration-form input,
+.shop-registration-form textarea {
+  width: 100%;
+  padding: 1.4rem 1.8rem; /* Increased padding */
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 1.1rem; /* Slightly larger font */
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+.image-upload-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 3rem; /* Increased padding */
+  border: 2px dashed rgba(245, 158, 11, 0.3);
+  transition: all 0.3s ease;
+  text-align: center;
+  margin: 2rem 0; /* Added margin */
+}
+
+.timing-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 3rem; /* Increased padding */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 2rem 0; /* Added margin */
+}
+
+.shop-registration-btn {
+  width: 100%;
+  padding: 1.6rem 0; /* Increased padding */
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  color: #000;
+  font-weight: 800;
+  font-size: 1.3rem; /* Increased font size */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  margin-top: 3rem; /* Increased margin */
+}
+
+/* Three column layout for larger screens */
+@media (min-width: 1200px) {
+  .form-row.three-cols {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* Better responsive breakpoints */
+@media (max-width: 1024px) {
+  .shop-registration-container {
+    max-width: 900px;
+  }
+  
+  .shop-registration-form {
+    padding: 3rem;
+  }
+  
+  .form-row {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .shop-registration-bg {
+    padding: 5rem 1.5rem 3rem 1.5rem;
+  }
+  
+  .shop-registration-container {
+    max-width: 100%;
+  }
+  
+  .shop-registration-form {
+    padding: 2.5rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 2.2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .image-upload-section,
+  .timing-section {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .shop-registration-bg {
+    padding: 4rem 1rem 2rem 1rem;
+  }
+  
+  .shop-registration-form {
+    padding: 2rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 1.8rem;
+  }
+  
+  .form-section {
+    margin-bottom: 2rem;
+  }
+  
+  .shop-registration-form input,
+  .shop-registration-form textarea {
+    padding: 1.2rem;
+    font-size: 1rem;
+  }
+  
+  .image-upload-section,
+  .timing-section {
+    padding: 1.5rem;
+  }
+}
+
+/* Additional spacing utilities */
+.section-spacer {
+  margin: 3rem 0;
+}
+
+.form-group-wide {
+  grid-column: 1 / -1;
+}
+
+/* Enhanced container for very large screens */
+@media (min-width: 1400px) {
+  .shop-registration-container {
+    max-width: 1300px;
+  }
+  
+  .shop-registration-form {
+    padding: 5rem;
+  }
+  
+  .form-row {
+    gap: 4rem;
+  }
+}.shop-registration-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 6rem 2rem 4rem 2rem; /* Top padding increased for navbar space */
+  position: relative;
+  overflow-x: hidden;
+}
+
+.shop-registration-container {
+  max-width: 1200px; /* Increased from 900px */
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.shop-registration-form {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 4rem; /* Increased padding */
+  color: #fff;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: none; /* Remove max-width restriction */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem; /* Increased gap */
+  margin-bottom: 2.5rem;
+}
+
+.form-section {
+  margin-bottom: 3rem; /* Increased margin */
+}
+
+.shop-registration-form input,
+.shop-registration-form textarea {
+  width: 100%;
+  padding: 1.4rem 1.8rem; /* Increased padding */
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 1.1rem; /* Slightly larger font */
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+.image-upload-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 3rem; /* Increased padding */
+  border: 2px dashed rgba(245, 158, 11, 0.3);
+  transition: all 0.3s ease;
+  text-align: center;
+  margin: 2rem 0; /* Added margin */
+}
+
+.timing-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 3rem; /* Increased padding */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 2rem 0; /* Added margin */
+}
+
+.shop-registration-btn {
+  width: 100%;
+  padding: 1.6rem 0; /* Increased padding */
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  color: #000;
+  font-weight: 800;
+  font-size: 1.3rem; /* Increased font size */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  margin-top: 3rem; /* Increased margin */
+}
+
+/* Three column layout for larger screens */
+@media (min-width: 1200px) {
+  .form-row.three-cols {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* Better responsive breakpoints */
+@media (max-width: 1024px) {
+  .shop-registration-container {
+    max-width: 900px;
+  }
+  
+  .shop-registration-form {
+    padding: 3rem;
+  }
+  
+  .form-row {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .shop-registration-bg {
+    padding: 5rem 1.5rem 3rem 1.5rem;
+  }
+  
+  .shop-registration-container {
+    max-width: 100%;
+  }
+  
+  .shop-registration-form {
+    padding: 2.5rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 2.2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .image-upload-section,
+  .timing-section {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .shop-registration-bg {
+    padding: 4rem 1rem 2rem 1rem;
+  }
+  
+  .shop-registration-form {
+    padding: 2rem;
+  }
+  
+  .shop-registration-title {
+    font-size: 1.8rem;
+  }
+  
+  .form-section {
+    margin-bottom: 2rem;
+  }
+  
+  .shop-registration-form input,
+  .shop-registration-form textarea {
+    padding: 1.2rem;
+    font-size: 1rem;
+  }
+  
+  .image-upload-section,
+  .timing-section {
+    padding: 1.5rem;
+  }
+}
+
+/* Additional spacing utilities */
+.section-spacer {
+  margin: 3rem 0;
+}
+
+.form-group-wide {
+  grid-column: 1 / -1;
+}
+
+/* Enhanced container for very large screens */
+@media (min-width: 1400px) {
+  .shop-registration-container {
+    max-width: 1300px;
+  }
+  
+  .shop-registration-form {
+    padding: 5rem;
+  }
+  
+  .form-row {
+    gap: 4rem;
+  }
+}

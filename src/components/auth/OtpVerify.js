@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from '../../api/axios';
 
+
 const OtpVerify = ({ email, onVerifySuccess }) => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);

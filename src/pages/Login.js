@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './Login.css';
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '', userType: 'customer' });
@@ -33,33 +34,49 @@ const Login = () => {
   };
 
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
-      <h2>Login</h2>
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
-        required
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={form.password}
-        onChange={handleChange}
-        required
-      />
-      <select name="userType" value={form.userType} onChange={handleChange}>
-        <option value="customer">Customer</option>
-        <option value="barber">Barber</option>
-      </select>
-      <button type="submit" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
-      </button>
-      {error && <div className="error">{error}</div>}
-    </form>
+    <div className="login-page-bg">
+      <form className="login-form-modern" onSubmit={handleSubmit}>
+        <h2 className="login-title">Sign In</h2>
+        <div className="input-group">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            autoFocus
+          />
+        </div>
+        <div className="input-group">
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <label>User Type</label>
+          <select name="userType" value={form.userType} onChange={handleChange}>
+            <option value="customer">Customer</option>
+            <option value="barber">Barber</option>
+          </select>
+        </div>
+        <button type="submit" className="login-btn-modern" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+        {error && <div className="login-error">{error}</div>}
+        <div className="login-footer">
+          <span>Don't have an account?</span>
+          <a href="/signup" className="login-link">Sign Up</a>
+        </div>
+      </form>
+    </div>
   );
 };
 

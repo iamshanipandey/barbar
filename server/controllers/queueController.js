@@ -1,36 +1,69 @@
 const Queue = require('../models/Queue');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
+const { io } = require("../index");
 
 exports.joinQueue = async (req, res) => {
   try {
-    const { shopId } = req.body;
-    if (!shopId) return res.status(400).json({ message: 'shopId required' });
+    const { shopId, name, phone, serviceId } = req.body;
+    if (!shopId || !name || !phone) return res.status(400).json({ message: 'shopId, name, phone required' });
+
     const shop = await Shop.findById(shopId);
     if (!shop) return res.status(404).json({ message: 'Shop not found' });
+
     let queue = await Queue.findOne({ shop: shopId });
     if (!queue) queue = await Queue.create({ shop: shopId, customers: [] });
-    if (queue.customers.some(c => c.user.toString() === req.user.id && c.status === 'waiting')) {
-      return res.status(400).json({ message: 'Already in queue' });
+
+    // Check if already in queue (by phone)
+    if (queue.customers.some(c => c.phone === phone && c.status === 'waiting')) {
+      return res.status(400).json({ message: 'Already in queue with this phone number' });
     }
-    queue.customers.push({ user: req.user.id });
+
+    let lastToken = 0;
+    if (queue.customers.length > 0) {
+      lastToken = Math.max(...queue.customers.map(c => c.token || 0));
+    }
+    const newToken = lastToken + 1;
+
+    queue.customers.push({
+      name,
+      phone,
+      service: serviceId,
+      token: newToken,
+      status: 'waiting'
+      // user: req.user ? req.user.id : undefined // optional, if login
+    });
+
     await queue.save();
-    res.status(200).json({ message: 'Joined queue' });
+    io.to(shopId).emit('queueUpdated', queue.customers);
+    res.status(200).json({ message: 'Joined queue', token: newToken });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-
 exports.nextCustomer = async (req, res) => {
   try {
     const { shopId } = req.body;
     if (!shopId) return res.status(400).json({ message: 'shopId required' });
     const queue = await Queue.findOne({ shop: shopId });
     if (!queue) return res.status(404).json({ message: 'Queue not found' });
-    const current = queue.customers.find(c => c.status === 'waiting');
-    if (current) current.status = 'done';
-    await queue.save();
-    res.status(200).json({ message: 'Next customer called' });
+
+    // Find currently serving customer
+    const servingIndex = queue.customers.findIndex(c => c.status === 'serving');
+    if (servingIndex !== -1) {
+      queue.customers[servingIndex].status = 'done';
+    }
+
+    // Find next waiting customer
+    const nextIndex = queue.customers.findIndex(c => c.status === 'waiting');
+    if (nextIndex !== -1) {
+      queue.customers[nextIndex].status = 'serving';
+      await queue.save();
+      return res.status(200).json({ message: 'Next customer called', token: queue.customers[nextIndex].token });
+    } else {
+      await queue.save();
+      return res.status(200).json({ message: 'No more customers in queue' });
+    }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -45,4 +78,71 @@ exports.getQueue = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
-}; 
+};
+
+// POST /api/queue/skip
+exports.skipCustomer = async (req, res) => {
+  try {
+    const { shopId, customerId } = req.body;
+    if (!shopId || !customerId) return res.status(400).json({ message: 'shopId and customerId required' });
+    const queue = await Queue.findOne({ shop: shopId });
+    if (!queue) return res.status(404).json({ message: 'Queue not found' });
+
+    const index = queue.customers.findIndex(c => c.user.toString() === customerId && c.status === 'waiting');
+    if (index === -1) return res.status(404).json({ message: 'Customer not found in queue' });
+
+    // Mark as skipped
+    queue.customers[index].status = 'skipped';
+    await queue.save();
+    res.status(200).json({ message: 'Customer skipped' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// POST /api/queue/move-to-last
+exports.moveToLast = async (req, res) => {
+  try {
+    const { shopId, customerId } = req.body;
+    if (!shopId || !customerId) return res.status(400).json({ message: 'shopId and customerId required' });
+    const queue = await Queue.findOne({ shop: shopId });
+    if (!queue) return res.status(404).json({ message: 'Queue not found' });
+
+    const index = queue.customers.findIndex(c => c.user.toString() === customerId && c.status === 'waiting');
+    if (index === -1) return res.status(404).json({ message: 'Customer not found in queue' });
+
+    // Remove and push to end
+    const customer = queue.customers.splice(index, 1)[0];
+    queue.customers.push(customer);
+    await queue.save();
+    res.status(200).json({ message: 'Customer moved to last' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Cancel queue for customer (remove self from queue)
+exports.cancelQueue = async (req, res) => {
+  try {
+    const { shopId } = req.body;
+    if (!shopId) return res.status(400).json({ message: 'shopId required' });
+
+    const queue = await Queue.findOne({ shop: shopId });
+    if (!queue) return res.status(404).json({ message: 'Queue not found' });
+
+    // Find customer in queue
+    const index = queue.customers.findIndex(
+      c => c.user.toString() === req.user.id && c.status === 'waiting'
+    );
+    if (index === -1) return res.status(404).json({ message: 'You are not in the queue' });
+
+    // Mark as out
+    queue.customers[index].status = 'out';
+    await queue.save();
+
+    res.status(200).json({ message: 'You have been removed from the queue' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+

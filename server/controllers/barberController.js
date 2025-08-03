@@ -101,3 +101,39 @@ exports.deleteService = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 }; 
+
+exports.updateShop = async (req, res) => {
+  try {
+    const { shopName, ownerName, address, city, location, open, close, profilePic } = req.body;
+    const shop = await Shop.findOne({ barber: req.user.id });
+    if (!shop) return res.status(404).json({ message: 'Shop not found' });
+
+    if (shopName) shop.shopName = shopName;
+    if (ownerName) shop.ownerName = ownerName;
+    if (address) shop.address = address;
+    if (city) shop.city = city;
+    if (location) shop.location = location;
+    if (open) shop.timings.open = open;
+    if (close) shop.timings.close = close;
+
+    if (profilePic) {
+      const upload = await cloudinary.uploader.upload(profilePic, { folder: 'barber/shops' });
+      shop.profilePic = upload.secure_url;
+    }
+
+    await shop.save();
+    res.status(200).json({ message: 'Shop profile updated', shop });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.getShopProfile = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ barber: req.user.id });
+    res.status(200).json({ shop });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+

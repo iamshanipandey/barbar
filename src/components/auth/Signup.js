@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from '../../api/axios';
+import "./Signup.css"
 
 const Signup = ({ onSignupSuccess }) => {
   const [form, setForm] = useState({
@@ -35,6 +36,7 @@ const Signup = ({ onSignupSuccess }) => {
     <form className="signup-form" onSubmit={handleSubmit}>
       <h2>Sign Up</h2>
       <input
+      className="signup-input"
         name="name"
         placeholder="Name"
         value={form.name}
@@ -42,6 +44,7 @@ const Signup = ({ onSignupSuccess }) => {
         required
       />
       <input
+      className="signup-input"
         name="email"
         placeholder="Email"
         value={form.email}
@@ -49,6 +52,7 @@ const Signup = ({ onSignupSuccess }) => {
         required
       />
       <input
+      className="signup-input"
         name="phone"
         placeholder="Phone"
         value={form.phone}
@@ -56,6 +60,7 @@ const Signup = ({ onSignupSuccess }) => {
         required
       />
       <input
+      className="signup-input"
         name="password"
         type="password"
         placeholder="Password"

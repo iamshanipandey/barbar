@@ -1,25 +1,279 @@
-import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useEffect, useState, useRef, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import "./Navbar.css";
 
-const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+function Navbar() {
+  const { user, token, logout } = useContext(AuthContext);
+  const [isLoggedIn, setLogged] = useState(false);
+  const [userType, setUserType] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const navbarRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  useEffect(() => {
+    // Use AuthContext data instead of localStorage directly
+    if (token && user) {
+      setLogged(true);
+      setUserType(user.userType);
+    } else {
+      setLogged(false);
+      setUserType("");
+    }
+
+    // Scroll hide/show effect
+    const handleScroll = () => {
+      const currentScrollPos = window.pageYOffset;
+      const isScrollingDown = prevScrollPos < currentScrollPos;
+      const isScrollingUp = prevScrollPos > currentScrollPos;
+      const isScrolledPastThreshold = currentScrollPos > 100;
+
+      if (isScrollingUp || currentScrollPos < 50) {
+        setVisible(true);
+      } 
+      else if (isScrollingDown && isScrolledPastThreshold) {
+        setVisible(false);
+        setIsMenuOpen(false);
+      }
+
+      setPrevScrollPos(currentScrollPos);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [prevScrollPos, token, user]);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Handle logout
+  const handleLogout = (e) => {
+    e.preventDefault();
+    console.log('Logout clicked');
     logout();
-    navigate('/');
+    navigate('/login');
+    setIsMenuOpen(false);
   };
 
+  // Handle navigation
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsMenuOpen(false);
+  };
+
+  // Desktop menu
+  const renderDesktopMenu = () => (
+    <div className="nav-buttons desktop-menu">
+      {isLoggedIn ? (
+        userType === "barber" ? (
+          <>
+            <button 
+              onClick={() => handleNavigation('/barber/dashboard')} 
+              className="nav-btn near-me-btn"
+            >
+              <span className="btn-icon">📊</span>
+              Dashboard
+            </button>
+            <div className="dropdown">
+              <button className="nav-btn login-btn dropdown-toggle">
+                <span className="btn-icon">💈</span>
+                My Shop
+              </button>
+              <div className="dropdown-menu">
+                <button onClick={() => handleNavigation('/barber/services')}>Services</button>
+                <button onClick={() => handleNavigation('/barber/register-shop')}>Shop Profile</button>
+                <button onClick={() => handleNavigation('/barber/reviews')}>Reviews</button>
+                <button onClick={handleLogout} className="logout-option">Logout</button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <button 
+              onClick={() => handleNavigation('/barbers-near-me')} 
+              className="nav-btn near-me-btn"
+            >
+              <span className="btn-icon">📍</span>
+              Near Me
+            </button>
+            <div className="dropdown">
+              <button className="nav-btn login-btn dropdown-toggle">
+                <span className="btn-icon">👤</span>
+                My Account
+              </button>
+              <div className="dropdown-menu">
+                <button onClick={() => handleNavigation('/customer/dashboard')}>Dashboard</button>
+                <button onClick={() => handleNavigation('/customer/queue-status')}>My Queue</button>
+                <button onClick={() => handleNavigation('/customer/my-reviews')}>Reviews</button>
+                <button onClick={handleLogout} className="logout-option">Logout</button>
+              </div>
+            </div>
+          </>
+        )
+      ) : (
+        <>
+          <button 
+            onClick={() => handleNavigation('/barbers-near-me')} 
+            className="nav-btn near-me-btn"
+          >
+            <span className="btn-icon">📍</span>
+            Near Me
+          </button>
+          <button 
+            onClick={() => handleNavigation('/login')} 
+            className="nav-btn login-btn"
+          >
+            <span className="btn-icon">🔑</span>
+            Login
+          </button>
+          <button 
+            onClick={() => handleNavigation('/signup')} 
+            className="nav-btn signup-btn"
+          >
+            <span className="btn-icon">✨</span>
+            Sign Up
+          </button>
+        </>
+      )}
+    </div>
+  );
+
+  // Mobile menu
+  const renderMobileMenu = () => (
+    <div className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}>
+      {isLoggedIn ? (
+        userType === "barber" ? (
+          <>
+            <button 
+              onClick={() => handleNavigation('/barber/dashboard')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">📊</span>
+              Dashboard
+            </button>
+            <button 
+              onClick={() => handleNavigation('/barber/services')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">💈</span>
+              My Services
+            </button>
+            <button 
+              onClick={() => handleNavigation('/barber/register-shop')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">🏪</span>
+              My Shop
+            </button>
+            <button 
+              onClick={() => handleNavigation('/barber/reviews')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">⭐</span>
+              Reviews
+            </button>
+            <button onClick={handleLogout} className="mobile-link logout">
+              <span className="mobile-icon">🚪</span>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <button 
+              onClick={() => handleNavigation('/barbers-near-me')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">📍</span>
+              Near Me
+            </button>
+            <button 
+              onClick={() => handleNavigation('/customer/dashboard')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">📊</span>
+              Dashboard
+            </button>
+            <button 
+              onClick={() => handleNavigation('/customer/queue-status')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">⏱️</span>
+              My Queue
+            </button>
+            <button 
+              onClick={() => handleNavigation('/customer/my-reviews')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">⭐</span>
+              My Reviews
+            </button>
+            <button onClick={handleLogout} className="mobile-link logout">
+              <span className="mobile-icon">🚪</span>
+              Logout
+            </button>
+          </>
+        )
+      ) : (
+        <>
+          <button 
+            onClick={() => handleNavigation('/barbers-near-me')} 
+            className="mobile-link"
+          >
+            <span className="mobile-icon">📍</span>
+            Near Me
+          </button>
+          <button 
+            onClick={() => handleNavigation('/login')} 
+            className="mobile-link"
+          >
+            <span className="mobile-icon">🔑</span>
+            Login
+          </button>
+          <button 
+            onClick={() => handleNavigation('/signup')} 
+            className="mobile-link highlight"
+          >
+            <span className="mobile-icon">✨</span>
+            Sign Up
+          </button>
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <nav className="navbar">
-      <Link to="/">Home</Link>
-      {!user && <><Link to="/signup">Signup</Link> <Link to="/login">Login</Link></>}
-      {user && user.userType === 'barber' && <Link to="/barber/dashboard">Barber Dashboard</Link>}
-      {user && user.userType === 'customer' && <Link to="/customer/dashboard">Customer Dashboard</Link>}
-      {user && <button onClick={handleLogout}>Logout</button>}
+    <nav 
+      className={`navbar ${!visible ? 'navbar-hidden' : ''} ${isMenuOpen ? 'menu-open' : ''}`}
+      ref={navbarRef}
+    >
+      {/* Logo */}
+      <div className="navbar-logo">
+        <button onClick={() => handleNavigation('/')} className="logo-link">
+          <div className="logo-container">
+            <span className="logo-text">QueueCuts</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Desktop Menu */}
+      <div className="nav-buttons desktop-only">
+        {renderDesktopMenu()}
+      </div>
+
+      {/* Mobile Menu Button */}
+      <div className={`mobile-menu-btn ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      {/* Mobile Menu */}
+      <div className="mobile-only">
+        {isMenuOpen && renderMobileMenu()}
+      </div>
     </nav>
   );
-};
+}
 
-export default Navbar; 
+export default Navbar;
