@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from '../../api/axios';
 import './ServiceManagement.css';
 
@@ -17,6 +17,8 @@ const ServiceManagement = () => {
   const [error, setError] = useState('');
   const [imagePreview, setImagePreview] = useState('');
 
+  const formRef = useRef(null);
+
   useEffect(() => {
     fetchServices();
   }, []);
@@ -27,10 +29,18 @@ const ServiceManagement = () => {
       const res = await axios.get('/barber/services', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setServices(res.data.services);
+      setServices(res.data.services || []);
     } catch (err) {
       setError('Failed to fetch services');
     }
+  };
+
+  const openAddForm = () => {
+    setEditingService(null);
+    setForm({ title: '', description: '', price: '', duration: '', image: '' });
+    setImagePreview('');
+    setShowForm(true);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const handleChange = (e) => {
@@ -38,11 +48,11 @@ const ServiceManagement = () => {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setForm({ ...form, image: reader.result });
+        setForm((f) => ({ ...f, image: reader.result }));
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
@@ -56,21 +66,17 @@ const ServiceManagement = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
       if (editingService) {
-        // Update service
         await axios.put(`/barber/service/${editingService._id}`, form, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Service updated successfully!');
       } else {
-        // Create new service
         await axios.post('/barber/service', form, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Service created successfully!');
       }
-      
       resetForm();
       fetchServices();
     } catch (err) {
@@ -82,20 +88,22 @@ const ServiceManagement = () => {
   const handleEdit = (service) => {
     setEditingService(service);
     setForm({
-      title: service.title,
-      description: service.description,
-      price: service.price,
-      duration: service.duration,
+      title: service.title || '',
+      description: service.description || '',
+      price: service.price || '',
+      duration: service.duration || '',
       image: ''
     });
-    setImagePreview(service.image);
+    setImagePreview(service.image || '');
     setShowForm(true);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const handleDelete = async (serviceId) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
       try {
         const token = localStorage.getItem('token');
+        
         await axios.delete(`/barber/service/${serviceId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -108,13 +116,7 @@ const ServiceManagement = () => {
   };
 
   const resetForm = () => {
-    setForm({
-      title: '',
-      description: '',
-      price: '',
-      duration: '',
-      image: ''
-    });
+    setForm({ title: '', description: '', price: '', duration: '', image: '' });
     setImagePreview('');
     setShowForm(false);
     setEditingService(null);
@@ -126,19 +128,22 @@ const ServiceManagement = () => {
       <div className="service-management-container">
         <div className="service-header">
           <h2 className="service-title">Service Management</h2>
-          <button 
-            className="add-service-btn"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? 'Cancel' : '+ Add Service'}
-          </button>
+          {/* Only show header button when form is not visible */}
+          {!showForm && (
+            <button
+              className="add-service-btn"
+              onClick={openAddForm}
+            >
+              + Add Service
+            </button>
+          )}
         </div>
 
         {showForm && (
-          <div className="service-form-container">
+          <div className="service-form-container" ref={formRef}>
             <form className="service-form" onSubmit={handleSubmit}>
               <h3>{editingService ? 'Edit Service' : 'Add New Service'}</h3>
-              
+
               <div className="form-row">
                 <div className="input-group">
                   <label>Service Title</label>
@@ -151,7 +156,7 @@ const ServiceManagement = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="input-group">
                   <label>Price (₹)</label>
                   <input
@@ -190,14 +195,19 @@ const ServiceManagement = () => {
 
               <div className="input-group">
                 <label>Service Image</label>
-                <div className="image-upload-container">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="image-input"
-                    required={!editingService}
-                  />
+                <div className="image-upload-wrapper">
+                  <label className="image-upload-label">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="image-input-hidden"
+                      required={!editingService}
+                    />
+                    <div className="image-upload-button">
+                      <span>📷 Choose Image</span>
+                    </div>
+                  </label>
                   {imagePreview && (
                     <div className="image-preview">
                       <img src={imagePreview} alt="Service Preview" />
@@ -208,7 +218,7 @@ const ServiceManagement = () => {
 
               <div className="form-buttons">
                 <button type="submit" className="submit-btn" disabled={loading}>
-                  {loading ? 'Saving...' : (editingService ? 'Update Service' : 'Add Service')}
+                  {loading ? 'Saving...' : editingService ? 'Update Service' : 'Add Service'}
                 </button>
                 <button type="button" className="cancel-btn" onClick={resetForm}>
                   Cancel
@@ -223,10 +233,13 @@ const ServiceManagement = () => {
         <div className="services-grid">
           {services.length === 0 ? (
             <div className="no-services">
-              <p>No services added yet. Add your first service!</p>
+              <p>No services added yet.</p>
+              <button className="add-service-btn-large" onClick={openAddForm}>
+                + Add Your First Service
+              </button>
             </div>
           ) : (
-            services.map(service => (
+            services.map((service) => (
               <div key={service._id} className="service-card">
                 <div className="service-image">
                   <img src={service.image} alt={service.title} />
@@ -239,16 +252,10 @@ const ServiceManagement = () => {
                     <span className="duration">{service.duration} min</span>
                   </div>
                   <div className="service-actions">
-                    <button 
-                      className="edit-btn"
-                      onClick={() => handleEdit(service)}
-                    >
+                    <button className="edit-btn" onClick={() => handleEdit(service)}>
                       Edit
                     </button>
-                    <button 
-                      className="delete-btn"
-                      onClick={() => handleDelete(service._id)}
-                    >
+                    <button className="delete-btn" onClick={() => handleDelete(service._id)}>
                       Delete
                     </button>
                   </div>
@@ -257,6 +264,19 @@ const ServiceManagement = () => {
             ))
           )}
         </div>
+
+        {/* Floating add button - only show when there are services and form is not visible */}
+        {services.length > 0 && !showForm && (
+          <button
+            type="button"
+            className="fab-add-service"
+            onClick={openAddForm}
+            aria-label="Add Service"
+            title="Add Service"
+          >
+            +
+          </button>
+        )}
       </div>
     </div>
   );

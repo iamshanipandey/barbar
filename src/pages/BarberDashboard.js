@@ -108,6 +108,50 @@ const BarberDashboard = () => {
     }
   };
 
+  const handleMarkDone = async (customerId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/queue/markdone', 
+        { shopId: shopData._id, customerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchDashboardData();
+      alert('Customer marked as done!');
+    } catch (err) {
+      alert('Failed to mark customer as done');
+    }
+  };
+
+  const handleMoveToLast = async (customerId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/queue/move-to-last', 
+        { shopId: shopData._id, customerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchDashboardData();
+      alert('Customer moved to last position!');
+    } catch (err) {
+      alert('Failed to move customer');
+    }
+  };
+
+  const handleRemoveCustomer = async (customerId) => {
+    if (window.confirm('Are you sure you want to remove this customer from queue?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.post('/queue/skip', 
+          { shopId: shopData._id, customerId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        fetchDashboardData();
+        alert('Customer removed from queue!');
+      } catch (err) {
+        alert('Failed to remove customer');
+      }
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -235,7 +279,7 @@ const BarberDashboard = () => {
         <div className="current-queue-section">
           <div className="queue-header">
             <h2>Current Queue</h2>
-            {queue.filter(c => c.status === 'waiting').length > 0 && (
+            {queue.filter(c => c.status === 'waiting').length > 1 && (
               <button className="next-customer-btn" onClick={handleNextCustomer}>
                 Call Next Customer
               </button>
@@ -243,14 +287,14 @@ const BarberDashboard = () => {
           </div>
           
           <div className="queue-container">
-            {queue.length === 0 ? (
+            {queue.filter(c => c.status === 'waiting').length === 0 ? (
               <div className="empty-queue">
                 <p>No customers in queue</p>
               </div>
             ) : (
               <div className="queue-list">
                 {queue
-                  .filter(customer => customer.status !== 'done')
+                  .filter(customer => customer.status === 'waiting')
                   .map((customer, index) => (
                     <div 
                       key={customer._id || index} 
@@ -263,11 +307,28 @@ const BarberDashboard = () => {
                           <p>{customer.phone}</p>
                         </div>
                       </div>
-                      <div className="customer-status">
-                        <span className={`status-badge ${customer.status}`}>
-                          {customer.status === 'waiting' ? 'Waiting' : 
-                           customer.status === 'serving' ? 'Serving' : 'Done'}
-                        </span>
+                      <div className="customer-actions">
+                        <button 
+                          className="action-btn-small done-btn"
+                          onClick={() => handleMarkDone(customer.user || customer._id)}
+                          title="Mark as Done"
+                        >
+                          ✅ Done
+                        </button>
+                        <button 
+                          className="action-btn-small move-btn"
+                          onClick={() => handleMoveToLast(customer.user || customer._id)}
+                          title="Move to Last"
+                        >
+                          ↓ Move
+                        </button>
+                        <button 
+                          className="action-btn-small remove-btn"
+                          onClick={() => handleRemoveCustomer(customer.user || customer._id)}
+                          title="Remove from Queue"
+                        >
+                          ❌ Remove
+                        </button>
                       </div>
                     </div>
                   ))

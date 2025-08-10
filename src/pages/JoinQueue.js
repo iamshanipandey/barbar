@@ -25,41 +25,38 @@ const JoinQueue = () => {
 
   useEffect(() => {
     if (!token) {
-      // If not logged in, still allow but require manual info
       setCustomerInfo({ name: '', phone: '' });
     }
     fetchShopData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId, token, user]);
 
   const fetchShopData = async () => {
     try {
-      // Fetch shop details
-      const shopRes = await axios.get(`/customer/barber/${shopId}`);
-      setShopData(shopRes.data.shop);
-      setServices(shopRes.data.shop.services || []);
-      
-      // Fetch current queue
-      const queueRes = await axios.get(`/queue/${shopId}`);
-      setQueueData(queueRes.data.queue || []);
-      
-    } catch (err) {
-      setError('Failed to load shop details');
-      console.error('Error fetching shop data:', err);
-    }
-    setLoading(false);
+        const shopRes = await axios.get(`/customer/barber/${shopId}`);
+        setShopData(shopRes.data.shop);
+        setServices(shopRes.data.shop.services || []);
+
+        try {
+          const queueRes = await axios.get(`/queue/${shopId}`);
+          setQueueData(queueRes.data.queue || []);
+        } catch (queueErr) {
+          console.warn('Queue not found, setting empty queue');
+          setQueueData([]);
+        }
+  } catch (err) {
+          setError('Failed to load shop details');
+        }
+      setLoading(false);
+
   };
 
   const calculateWaitingTime = () => {
     const waitingCustomers = queueData.filter(customer => customer.status === 'waiting');
     const servingCustomer = queueData.find(customer => customer.status === 'serving');
-    
     const avgServiceTime = 30; // minutes
     let totalWaitTime = 0;
-    
-    if (servingCustomer) {
-      totalWaitTime += 15; // Assume 15 min remaining for current customer
-    }
-    
+    if (servingCustomer) totalWaitTime += 15;
     totalWaitTime += waitingCustomers.length * avgServiceTime;
     return totalWaitTime;
   };
@@ -73,20 +70,16 @@ const JoinQueue = () => {
 
   const handleJoinQueue = async (e) => {
     e.preventDefault();
-    
     if (!customerInfo.name || !customerInfo.phone) {
       setError('Please fill in your name and phone number');
       return;
     }
-
     if (!selectedService) {
       setError('Please select a service');
       return;
     }
-
     setSubmitting(true);
     setError('');
-
     try {
       const response = await axios.post('/queue/join', {
         shopId,
@@ -94,17 +87,20 @@ const JoinQueue = () => {
         phone: customerInfo.phone,
         serviceId: selectedService
       });
-
       setTokenNumber(response.data.token);
       setSuccess(true);
-      
-      // Refresh queue data
       fetchShopData();
-      
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to join queue');
     }
     setSubmitting(false);
+  };
+
+  const handleServiceKeyDown = (e, id) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setSelectedService(id);
+    }
   };
 
   if (loading) {
@@ -181,10 +177,6 @@ const JoinQueue = () => {
         <div className="shop-header-section">
           <div className="shop-image-container">
             <img src={shopData.profilePic} alt={shopData.shopName} className="shop-image" />
-            <div className="shop-status">
-              <span className="status-dot open"></span>
-              <span>Open Now</span>
-            </div>
           </div>
           
           <div className="shop-info">
@@ -268,28 +260,27 @@ const JoinQueue = () => {
               </div>
             </div>
 
-            {/* Service Selection */}
+            {/* Service Selection (TEXT ONLY: Name + Duration) */}
             <div className="form-group">
               <h3 className="group-title">Select Service</h3>
-              <div className="services-grid">
+              <div className="services-grid services-grid--list">
                 {services.map((service) => (
-                  <div 
-                    key={service._id} 
-                    className={`service-card ${selectedService === service._id ? 'selected' : ''}`}
+                  <div
+                    key={service._id}
+                    className={`service-card simple ${selectedService === service._id ? 'selected' : ''}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedService(service._id)}
+                    onKeyDown={(e) => handleServiceKeyDown(e, service._id)}
+                    aria-pressed={selectedService === service._id}
                   >
-                    <div className="service-image">
-                      <img src={service.image} alt={service.title} />
-                    </div>
-                    <div className="service-content">
+                    <div className="service-text">
                       <h4 className="service-title">{service.title}</h4>
-                      <p className="service-description">{service.description}</p>
-                      <div className="service-details">
-                        <span className="service-price">₹{service.price}</span>
-                        <span className="service-duration">{service.duration} min</span>
-                      </div>
                     </div>
-                    <div className="selection-indicator">
+                    <div className="service-right">
+                      <span className="service-duration-chip">
+                        {service.duration} min
+                      </span>
                       <div className="radio-button">
                         {selectedService === service._id && <div className="radio-dot"></div>}
                       </div>

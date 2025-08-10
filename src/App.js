@@ -10,6 +10,7 @@ import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import BarbersNearMe from './pages/BarbersNearMe';
 import JoinQueue from './pages/JoinQueue';
+import CheckQueueStatus from './pages/CheckQueueStatus';
 
 // Barber Components
 import ShopRegistration from './components/barber/ShopRegistration';
@@ -26,6 +27,7 @@ const App = () => (
         <Route path="/barbers-near-me" element={<BarbersNearMe />} />
         <Route path="/nearby-barbers" element={<BarbersNearMe />} />
         <Route path="/join-queue/:shopId" element={<JoinQueue />} />
+        <Route path="/check-status" element={<CheckQueueStatus />} />
 
         {/* Barber Routes */}
         <Route 

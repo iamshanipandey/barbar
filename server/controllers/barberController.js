@@ -93,14 +93,25 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: 'Service ID is required' });
+    }
+
     const service = await Service.findById(id);
-    if (!service) return res.status(404).json({ message: 'Service not found' });
-    await service.remove();
-    res.status(200).json({ message: 'Service deleted' });
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    await Service.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Service deleted successfully' });
   } catch (err) {
+    console.error('Delete Service Error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
-}; 
+};
+
 
 exports.updateShop = async (req, res) => {
   try {

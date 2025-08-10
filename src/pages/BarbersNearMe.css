@@ -11,6 +11,7 @@
   color: white;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 0;
+  margin-top: 1rem;
 }
 
 .barbers-container {
@@ -772,6 +773,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  margin-top: 1rem;
 }
 
 .queue-stat {
@@ -1023,4 +1025,21 @@
   .action-btn {
     height: 40px;
   }
+}
+.barber-card {
+  position: relative; /* ensure stacking context */
+}
+
+/* Overlay should not block clicks */
+.barber-card::before {
+  pointer-events: none;
+  z-index: 0; /* keep it behind content */
+}
+
+/* Make sure actual content stays above */
+.card-image-container,
+.card-content,
+.buttons-container {
+  position: relative;
+  z-index: 1;
 }
