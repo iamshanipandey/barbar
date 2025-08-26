@@ -16,6 +16,7 @@ const BarberDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -58,9 +59,14 @@ const BarberDashboard = () => {
           const queueRes = await axios.get(`/queue/${shopRes.data.shop._id}`);
           queueData = queueRes.data.queue || [];
           console.log('Queue data:', queueData);
+          
+          // Log the structure of the first customer to understand the data
+          if (queueData.length > 0) {
+            console.log('First customer structure:', queueData[0]);
+            console.log('Customer keys:', Object.keys(queueData[0]));
+          }
         } catch (queueErr) {
           console.log('No queue data found or error:', queueErr.message);
-          // Queue might not exist yet, that's okay
         }
       }
       
@@ -79,7 +85,7 @@ const BarberDashboard = () => {
         totalServices: servicesRes.data.services.length,
         currentQueue,
         todayServed,
-        avgRating: 4.5 // You can calculate this from reviews
+        avgRating: 4.5
       });
       
     } catch (err) {
@@ -94,60 +100,144 @@ const BarberDashboard = () => {
     setLoading(false);
   };
 
+  const getCustomerId = (customer) => {
+    // Try different possible ID fields
+    const possibleIds = [
+      customer._id,
+      customer.id,
+      customer.user?._id,
+      customer.user?.id,
+      customer.userId,
+      customer.customerId
+    ];
+    
+    // Find the first non-null ID
+    const customerId = possibleIds.find(id => id != null);
+    
+    console.log('Customer object:', customer);
+    console.log('Possible IDs:', possibleIds);
+    console.log('Selected ID:', customerId);
+    
+    return customerId;
+  };
+
   const handleNextCustomer = async () => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const token = localStorage.getItem('token');
       await axios.post('/queue/next', 
         { shopId: shopData._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchDashboardData(); // Refresh data
+      await fetchDashboardData();
       alert('Next customer called!');
     } catch (err) {
+      console.error('Next customer error:', err);
       alert('Failed to call next customer');
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleMarkDone = async (customerId) => {
+  const handleMarkDone = async (customer) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const token = localStorage.getItem('token');
+      const customerId = getCustomerId(customer);
+      
+      if (!customerId) {
+        alert('Unable to identify customer. Please refresh and try again.');
+        return;
+      }
+      
+      console.log('Marking done - Customer ID:', customerId);
+      
       await axios.post('/queue/markdone', 
-        { shopId: shopData._id, customerId },
+        { 
+          shopId: shopData._id, 
+          customerId: customerId.toString() // Ensure it's a string
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchDashboardData();
+      
+      await fetchDashboardData();
       alert('Customer marked as done!');
     } catch (err) {
-      alert('Failed to mark customer as done');
+      console.error('Mark done error:', err);
+      alert(err.response?.data?.message || 'Failed to mark customer as done');
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleMoveToLast = async (customerId) => {
+  const handleMoveToLast = async (customer) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
       const token = localStorage.getItem('token');
+      const customerId = getCustomerId(customer);
+      
+      if (!customerId) {
+        alert('Unable to identify customer. Please refresh and try again.');
+        return;
+      }
+      
+      console.log('Moving to last - Customer ID:', customerId);
+      
       await axios.post('/queue/move-to-last', 
-        { shopId: shopData._id, customerId },
+        { 
+          shopId: shopData._id, 
+          customerId: customerId.toString() // Ensure it's a string
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchDashboardData();
+      
+      await fetchDashboardData();
       alert('Customer moved to last position!');
     } catch (err) {
-      alert('Failed to move customer');
+      console.error('Move to last error:', err);
+      alert(err.response?.data?.message || 'Failed to move customer');
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleRemoveCustomer = async (customerId) => {
+  const handleRemoveCustomer = async (customer) => {
+    if (actionLoading) return;
+    
     if (window.confirm('Are you sure you want to remove this customer from queue?')) {
       try {
+        setActionLoading(true);
         const token = localStorage.getItem('token');
+        const customerId = getCustomerId(customer);
+        
+        if (!customerId) {
+          alert('Unable to identify customer. Please refresh and try again.');
+          return;
+        }
+        
+        console.log('Removing customer - Customer ID:', customerId);
+        
         await axios.post('/queue/skip', 
-          { shopId: shopData._id, customerId },
+          { 
+            shopId: shopData._id, 
+            customerId: customerId.toString() // Ensure it's a string
+          },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        fetchDashboardData();
+        
+        await fetchDashboardData();
         alert('Customer removed from queue!');
       } catch (err) {
-        alert('Failed to remove customer');
+        console.error('Remove customer error:', err);
+        alert(err.response?.data?.message || 'Failed to remove customer');
+      } finally {
+        setActionLoading(false);
       }
     }
   };
@@ -156,9 +246,6 @@ const BarberDashboard = () => {
     logout();
     navigate('/login');
   };
-
-  console.log('Dashboard render - shopData:', shopData);
-  console.log('Dashboard render - loading:', loading);
 
   if (loading) {
     return (
@@ -277,65 +364,96 @@ const BarberDashboard = () => {
 
         {/* Current Queue Section */}
         <div className="current-queue-section">
-          <div className="queue-header">
-            <h2>Current Queue</h2>
-            {queue.filter(c => c.status === 'waiting').length > 1 && (
-              <button className="next-customer-btn" onClick={handleNextCustomer}>
-                Call Next Customer
-              </button>
-            )}
-          </div>
-          
-          <div className="queue-container">
-            {queue.filter(c => c.status === 'waiting').length === 0 ? (
-              <div className="empty-queue">
-                <p>No customers in queue</p>
+  <div className="queue-header">
+    <h2>Current Queue</h2>
+    {queue.filter(c => c.status === 'waiting').length > 0 && 
+     !queue.some(c => c.status === 'serving') && (
+      <button 
+        className="next-customer-btn" 
+        onClick={handleNextCustomer}
+        disabled={actionLoading}
+      >
+        {actionLoading ? 'Processing...' : 'Call Next Customer'}
+      </button>
+    )}
+  </div>
+  
+  <div className="queue-container">
+    {queue.filter(c => c.status === 'waiting' || c.status === 'serving').length === 0 ? (
+      <div className="empty-queue">
+        <p>No customers in queue</p>
+      </div>
+    ) : (
+      <div className="queue-list">
+        {/* Show currently serving customer first */}
+        {queue
+          .filter(customer => customer.status === 'serving')
+          .map((customer, index) => (
+            <div 
+              key={customer._id || customer.id || index} 
+              className={`queue-item serving`}
+            >
+              <div className="customer-info">
+                <div className="token-number">#{customer.token || index + 1}</div>
+                <div className="customer-details">
+                  <h4>{customer.name || 'Unknown'}</h4>
+                  <p>{customer.phone || 'No phone'}</p>
+                  <span className="status-badge serving">Currently Serving</span>
+                </div>
               </div>
-            ) : (
-              <div className="queue-list">
-                {queue
-                  .filter(customer => customer.status === 'waiting')
-                  .map((customer, index) => (
-                    <div 
-                      key={customer._id || index} 
-                      className={`queue-item ${customer.status}`}
-                    >
-                      <div className="customer-info">
-                        <div className="token-number">#{customer.token}</div>
-                        <div className="customer-details">
-                          <h4>{customer.name}</h4>
-                          <p>{customer.phone}</p>
-                        </div>
-                      </div>
-                      <div className="customer-actions">
-                        <button 
-                          className="action-btn-small done-btn"
-                          onClick={() => handleMarkDone(customer.user || customer._id)}
-                          title="Mark as Done"
-                        >
-                          ✅ Done
-                        </button>
-                        <button 
-                          className="action-btn-small move-btn"
-                          onClick={() => handleMoveToLast(customer.user || customer._id)}
-                          title="Move to Last"
-                        >
-                          ↓ Move
-                        </button>
-                        <button 
-                          className="action-btn-small remove-btn"
-                          onClick={() => handleRemoveCustomer(customer.user || customer._id)}
-                          title="Remove from Queue"
-                        >
-                          ❌ Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                }
+              <div className="customer-actions">
+                <button 
+                  className="action-btn-small done-btn"
+                  onClick={() => handleMarkDone(customer)}
+                  disabled={actionLoading}
+                  title="Mark as Done"
+                >
+                  ✅ Done
+                </button>
+                <button 
+                  className="action-btn-small move-btn"
+                  onClick={() => handleMoveToLast(customer)}
+                  disabled={actionLoading}
+                  title="Move to Last"
+                >
+                  ↓ Move
+                </button>
+                <button 
+                  className="action-btn-small remove-btn"
+                  onClick={() => handleRemoveCustomer(customer)}
+                  disabled={actionLoading}
+                  title="Remove from Queue"
+                >
+                  ❌ Remove
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          ))
+        }
+        
+        {/* Show waiting customers */}
+        {queue
+          .filter(customer => customer.status === 'waiting')
+          .map((customer, index) => (
+            <div 
+              key={customer._id || customer.id || index} 
+              className={`queue-item waiting`}
+            >
+              <div className="customer-info">
+                <div className="token-number">#{customer.token || index + 1}</div>
+                <div className="customer-details">
+                  <h4>{customer.name || 'Unknown'}</h4>
+                  <p>{customer.phone || 'No phone'}</p>
+                  <span className="status-badge waiting">Waiting</span>
+                </div>
+              </div>
+              {/* No action buttons for waiting customers */}
+            </div>
+          ))
+        }
+      </div>
+    )}
+  </div>
         </div>
 
         {/* Recent Services */}
