@@ -1,40 +1,37 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-console.log("ENV PASS:", process.env.MAIL_PASS); // quotes ke saath check karo
+const user = (process.env.MAIL_USER || '').trim();
+const pass = (process.env.MAIL_PASS || '')
+  .trim()
+  .replace(/['"]/g, '')            // quotes hataye
+  .replace(/\s+/g, '')              // saare spaces hataye
+  .replace(/[^\x20-\x7E]/g, '');    // non-ascii hidden chars hataye
 
-// Transporter ko global declare karo
+console.log('MAIL_USER:', JSON.stringify(user));
+console.log('PASS LENGTH:', pass.length); // 16 aana chahiye
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',  // Direct gmail service use karo
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS.trim()
-  }
+  host: 'smtp.gmail.com',
+  port: 587,        // STARTTLS
+  secure: false,    // port 587 => secure false
+  auth: { user, pass },
+  requireTLS: true,
+  logger: true,
+  debug: true,
+  tls: { minVersion: 'TLSv1.2' }
 });
 
-// Verify connection
-transporter.verify(function(error, success) {
-  if (error) {
-    console.log("❌ SMTP Connection Error:", error);
-  } else {
-    console.log("✅ SMTP Server is ready to take our messages");
-  }
+transporter.verify((err) => {
+  if (err) console.error('❌ SMTP verify error:', err);
+  else console.log('✅ SMTP ready');
 });
 
-const sendMail = async (to, subject, html) => {
-  try {
-    const info = await transporter.sendMail({
-      from: `"Barber App" <${process.env.MAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-    console.log("✅ Mail sent:", info.messageId);
-    return info;
-  } catch (error) {
-    console.error("❌ Mail error:", error.message);
-    throw error;
-  }
+module.exports = async function sendMail(to, subject, html) {
+  return transporter.sendMail({
+    from: `"Barber App" <${user}>`, // Gmail me from == user hi rakho
+    to,
+    subject,
+    html
+  });
 };
-
-module.exports = sendMail;
