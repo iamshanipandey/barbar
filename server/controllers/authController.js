@@ -74,9 +74,20 @@
         });
       }
 
-      await sendMail(email, 'Your OTP', `<h2>Your OTP is: <b>${otp}</b></h2>`);
+      try {
+  await sendMail(email, 'Your OTP', `<h2>Your OTP is: <b>${otp}</b></h2>`);
+} catch (e) {
+  console.error('sendMail failed:', e?.response || e?.message);
+  // Dev/staging fallback
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`DEV OTP for ${email}: ${otp}`);
+    return res.status(200).json({ message: 'OTP (dev mode)', devOTP: otp });
+  }
+  // Production me user ko friendly msg
+  return res.status(200).json({ message: 'OTP could not be emailed right now. Try again later.' });
+}
 
-      return res.status(200).json({ message: 'OTP sent to email' });
+return res.status(200).json({ message: 'OTP sent to email' });
     } catch (err) {
       // Handle duplicate key gracefully
       if (err?.code === 11000) {
