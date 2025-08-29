@@ -1,37 +1,39 @@
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
-const user = (process.env.MAIL_USER || '').trim();
-const pass = (process.env.MAIL_PASS || '')
-  .trim()
-  .replace(/['"]/g, '')            // quotes hataye
-  .replace(/\s+/g, '')              // saare spaces hataye
-  .replace(/[^\x20-\x7E]/g, '');    // non-ascii hidden chars hataye
-
-console.log('MAIL_USER:', JSON.stringify(user));
-console.log('PASS LENGTH:', pass.length); // 16 aana chahiye
+const user = (process.env.MAIL_USER || "").trim();
+const pass = (process.env.MAIL_PASS || "").trim().replace(/['"]/g, ""); // quotes hata diye
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,        // STARTTLS
-  secure: false,    // port 587 => secure false
-  auth: { user, pass },
-  requireTLS: true,
-  logger: true,
-  debug: true,
-  tls: { minVersion: 'TLSv1.2' }
+  host: "smtp.gmail.com",
+  port: 465,        // SSL port
+  secure: true,     // true because using 465
+  auth: { user, pass }
 });
 
+// Optional: startup verify
 transporter.verify((err) => {
-  if (err) console.error('❌ SMTP verify error:', err);
-  else console.log('✅ SMTP ready');
+  if (err) {
+    console.error("❌ SMTP error:", err.message);
+  } else {
+    console.log("✅ SMTP ready to send mails");
+  }
 });
 
-module.exports = async function sendMail(to, subject, html) {
-  return transporter.sendMail({
-    from: `"Barber App" <${user}>`, // Gmail me from == user hi rakho
-    to,
-    subject,
-    html
-  });
-};
+async function sendMail(to, subject, html) {
+  try {
+    const info = await transporter.sendMail({
+      from: `"Barber App" <${user}>`, // Gmail rule: from must match auth user
+      to,
+      subject,
+      html,
+    });
+    console.log("📩 Mail sent:", info.messageId);
+    return info;
+  } catch (err) {
+    console.error("❌ Mail send error:", err.message);
+    throw err;
+  }
+}
+
+module.exports = sendMail;
