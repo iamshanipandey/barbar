@@ -162,3 +162,182 @@
 .login-form-modern select::-ms-expand {
   display: none;
 }
+/* Page wrapper */
+.login-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0.75rem; /* mobile tighter */
+}
+
+/* Form card (mobile-first) */
+.login-form-modern {
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.10), 0 1.5px 8px rgba(0,0,0,0.10);
+  padding: 1.25rem 1rem 1.25rem 1rem;
+  width: 100%;
+  max-width: 92vw; /* mobile: almost full width */
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1.5px solid rgba(245, 158, 11, 0.13);
+  position: relative;
+}
+
+/* Title */
+.login-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #fff 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.input-group label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f59e0b;
+  margin-bottom: 0.1rem;
+}
+
+.login-form-modern input,
+.login-form-modern select {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(245, 158, 11, 0.18);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.login-form-modern input:focus,
+.login-form-modern select:focus {
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+/* Custom select arrow */
+.login-form-modern select,
+.login-form-modern select:focus,
+.login-form-modern select:active {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='orange' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 8L10 13L15 8' stroke='orange' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.2em;
+}
+.login-form-modern select option {
+  background: #1e293b;
+  color: #fff;
+}
+.login-form-modern select::-ms-expand { display: none; }
+
+/* Login button */
+.login-btn-modern,
+.login-form-modern .login-btn-modern {
+  margin-top: 0.5rem;
+  padding: 0.95rem 0;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.13);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.01em;
+}
+.login-btn-modern:hover {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.18);
+}
+.login-btn-modern:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error */
+.login-error {
+  background: #ffeaea;
+  color: #d32f2f;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Footer (Sign Up link row) */
+.login-footer {
+  margin-top: 1.2rem;
+  text-align: center;
+  color: #f3f3f3;
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  align-items: center;
+}
+.login-link {
+  color: #f59e0b !important;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.login-link:hover {
+  color: #d97706 !important;
+  text-decoration: underline;
+}
+
+/* Responsive sizes */
+@media (min-width: 480px) {
+  .login-form-modern {
+    padding: 1.75rem 1.25rem 1.5rem 1.25rem;
+    max-width: 420px;
+    gap: 1.1rem;
+  }
+  .login-title { font-size: 1.8rem; }
+}
+
+@media (min-width: 768px) {
+  .login-page-bg { padding: 2rem 1rem; }
+  .login-form-modern {
+    padding: 2rem 1.75rem 1.75rem 1.75rem;
+    max-width: 560px;
+    gap: 1.2rem;
+  }
+  .login-title { font-size: 2rem; margin-bottom: 1.25rem; }
+  .input-group { gap: 0.45rem; }
+}
+
+@media (min-width: 1024px) {
+  .login-form-modern { padding: 2.5rem 2rem 2rem 2rem; max-width: 640px; }
+  .login-title { font-size: 2.1rem; }
+}
+
+@media (min-width: 1440px) {
+  .login-form-modern { max-width: 680px; }
+}

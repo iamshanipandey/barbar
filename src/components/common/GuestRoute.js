@@ -2,31 +2,26 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
-const ProtectedRoute = ({ children, userType, redirectTo = '/login' }) => {
+const GuestRoute = ({ children }) => {
   const { user, token, loading } = useContext(AuthContext) || {};
   const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const hasToken = token || storedToken;
 
-  // Wait until auth state is resolved (avoid redirect flicker)
   if (loading) {
     return (
       <div className="route-loading" style={{ padding: 24, textAlign: 'center' }}>
         <div className="loading-spinner" />
-        <p>Checking authentication...</p>
+        <p>Loading...</p>
       </div>
     );
   }
 
-  if (!hasToken) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Optional role check
-  if (userType && user?.userType && user.userType !== userType) {
+  // If already authenticated, kick out from guest page to dashboard
+  if (user || token || storedToken) {
+    const redirectTo = user?.userType === 'barber' ? '/barber/dashboard' : '/';
     return <Navigate to={redirectTo} replace />;
   }
 
   return children;
 };
 
-export default ProtectedRoute;
+export default GuestRoute;

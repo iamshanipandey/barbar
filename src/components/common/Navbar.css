@@ -594,3 +594,11 @@ Button styles for navigation
   border: none;
   cursor: pointer;
 }
+.track-queue-btn {
+  background: #0ea5e9; /* sky-500 */
+  border: 1px solid #0284c7;
+  color: #fff;
+}
+.track-queue-btn:hover {
+  background: #0284c7;
+}

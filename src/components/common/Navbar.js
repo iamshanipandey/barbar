@@ -14,7 +14,7 @@ function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Use AuthContext data instead of localStorage directly
+    // Sync with AuthContext
     if (token && user) {
       setLogged(true);
       setUserType(user.userType);
@@ -32,8 +32,7 @@ function Navbar() {
 
       if (isScrollingUp || currentScrollPos < 50) {
         setVisible(true);
-      } 
-      else if (isScrollingDown && isScrolledPastThreshold) {
+      } else if (isScrollingDown && isScrolledPastThreshold) {
         setVisible(false);
         setIsMenuOpen(false);
       }
@@ -50,7 +49,6 @@ function Navbar() {
   // Handle logout
   const handleLogout = (e) => {
     e.preventDefault();
-    console.log('Logout clicked');
     logout();
     navigate('/login');
     setIsMenuOpen(false);
@@ -97,6 +95,16 @@ function Navbar() {
               <span className="btn-icon">📍</span>
               Near Me
             </button>
+
+            {/* Track Queue visible for non-barber */}
+            <button 
+              onClick={() => handleNavigation('/check-status')}
+              className="nav-btn track-queue-btn"
+            >
+              <span className="btn-icon">⏱️</span>
+              Track Queue
+            </button>
+
             <div className="dropdown">
               <button className="nav-btn login-btn dropdown-toggle">
                 <span className="btn-icon">👤</span>
@@ -104,7 +112,8 @@ function Navbar() {
               </button>
               <div className="dropdown-menu">
                 <button onClick={() => handleNavigation('/customer/dashboard')}>Dashboard</button>
-                <button onClick={() => handleNavigation('/customer/queue-status')}>My Queue</button>
+                {/* Fixed route to /check-status */}
+                <button onClick={() => handleNavigation('/check-status')}>My Queue</button>
                 <button onClick={() => handleNavigation('/customer/my-reviews')}>Reviews</button>
                 <button onClick={handleLogout} className="logout-option">Logout</button>
               </div>
@@ -120,6 +129,16 @@ function Navbar() {
             <span className="btn-icon">📍</span>
             Near Me
           </button>
+
+          {/* Track Queue for guests */}
+          <button 
+            onClick={() => handleNavigation('/check-status')} 
+            className="nav-btn track-queue-btn"
+          >
+            <span className="btn-icon">⏱️</span>
+            Track Queue
+          </button>
+
           <button 
             onClick={() => handleNavigation('/login')} 
             className="nav-btn login-btn"
@@ -187,6 +206,16 @@ function Navbar() {
               <span className="mobile-icon">📍</span>
               Near Me
             </button>
+
+            {/* Track Queue for non-barber */}
+            <button 
+              onClick={() => handleNavigation('/check-status')} 
+              className="mobile-link"
+            >
+              <span className="mobile-icon">⏱️</span>
+              Track Queue
+            </button>
+
             <button 
               onClick={() => handleNavigation('/customer/dashboard')} 
               className="mobile-link"
@@ -194,8 +223,9 @@ function Navbar() {
               <span className="mobile-icon">📊</span>
               Dashboard
             </button>
+            {/* Fixed My Queue route */}
             <button 
-              onClick={() => handleNavigation('/customer/queue-status')} 
+              onClick={() => handleNavigation('/check-status')} 
               className="mobile-link"
             >
               <span className="mobile-icon">⏱️</span>
@@ -222,6 +252,14 @@ function Navbar() {
           >
             <span className="mobile-icon">📍</span>
             Near Me
+          </button>
+          {/* Track Queue for guests */}
+          <button 
+            onClick={() => handleNavigation('/check-status')} 
+            className="mobile-link"
+          >
+            <span className="mobile-icon">⏱️</span>
+            Track Queue
           </button>
           <button 
             onClick={() => handleNavigation('/login')} 

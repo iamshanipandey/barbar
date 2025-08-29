@@ -1043,3 +1043,102 @@
   position: relative;
   z-index: 1;
 }
+
+/* Radius panel */
+.radius-panel {
+  margin-top: 10px;
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.radius-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.radius-btn {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.radius-btn:hover {
+  background: #263244;
+}
+
+.radius-btn.active {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+}
+
+.custom-radius {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.custom-input {
+  width: 90px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.apply-radius-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.apply-radius-btn:hover {
+  background: #1d4ed8;
+}
+
+.radius-meta {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.link-btn {
+  background: transparent;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.loc-warning {
+  color: #f59e0b;
+}
+
+/* Distance badge on card */
+.distance-badge {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  background: rgba(17, 24, 39, 0.85);
+  color: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid rgba(55, 65, 81, 0.6);
+}
+
+/* Keep existing styles as-is... */ 

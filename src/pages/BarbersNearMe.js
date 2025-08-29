@@ -3,10 +3,37 @@ import axios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import './BarbersNearMe.css';
 
+const toRad = (v) => (v * Math.PI) / 180;
+const haversineDistance = (lat1, lon1, lat2, lon2) => {
+  if ([lat1, lon1, lat2, lon2].some((n) => typeof n !== 'number')) return null;
+  const R = 6371; // km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return +(R * c).toFixed(2);
+};
+
+const applySearchFilter = (list, q) => {
+  if (!q?.trim()) return list;
+  const s = q.toLowerCase();
+  return list.filter(
+    (b) =>
+      b?.city?.toLowerCase().includes(s) ||
+      b?.shopName?.toLowerCase().includes(s) ||
+      b?.ownerName?.toLowerCase().includes(s)
+  );
+};
+
 const BarbersNearMe = () => {
   const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detecting, setDetecting] = useState(true);
   const [error, setError] = useState('');
+  const [locError, setLocError] = useState('');
+
   const [searchCity, setSearchCity] = useState('');
   const [filteredBarbers, setFilteredBarbers] = useState([]);
   const [selectedBarber, setSelectedBarber] = useState(null);
@@ -14,34 +41,87 @@ const BarbersNearMe = () => {
   const [queueData, setQueueData] = useState([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [ratings, setRatings] = useState({});
+
+  const [coords, setCoords] = useState(null); // {lat, lng}
+  const [radiusKm, setRadiusKm] = useState(5);
+  const [customRadius, setCustomRadius] = useState(5);
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchBarbers();
+    detectLocationAndFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (searchCity.trim() === '') {
-      setFilteredBarbers(barbers);
-    } else {
-      const q = searchCity.toLowerCase();
-      const filtered = barbers.filter((barber) =>
-        barber?.city?.toLowerCase().includes(q) ||
-        barber?.shopName?.toLowerCase().includes(q) ||
-        barber?.ownerName?.toLowerCase().includes(q)
-      );
-      setFilteredBarbers(filtered);
-    }
+    // apply search on the currently loaded (already radius-filtered) barbers
+    setFilteredBarbers(applySearchFilter(barbers, searchCity));
   }, [searchCity, barbers]);
 
-  const fetchBarbers = async () => {
+  const detectLocationAndFetch = () => {
+    setDetecting(true);
+    setLocError('');
+    if (!navigator.geolocation) {
+      setLocError('Geolocation is not supported on this device.');
+      setDetecting(false);
+      // Fallback: fetch without location (backend may return all)
+      fetchBarbersByRadius(null, null, radiusKm);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCoords({ lat, lng });
+        fetchBarbersByRadius(lat, lng, radiusKm);
+        setDetecting(false);
+      },
+      (err) => {
+        console.error('Geolocation error:', err);
+        setLocError('Location access denied. You can still search manually.');
+        setDetecting(false);
+        // Fallback: fetch without location (backend may return all)
+        fetchBarbersByRadius(null, null, radiusKm);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const fetchBarbersByRadius = async (lat, lng, radius) => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get('/customer/barbers-near-me');
-      const list = response?.data?.barbers || [];
+      const params = {};
+      if (typeof lat === 'number' && typeof lng === 'number') {
+        params.lat = lat;
+        params.lng = lng;
+        params.radiusKm = radius;
+      }
+      const response = await axios.get('/customer/barbers-near-me', { params });
+      let list = response?.data?.barbers || [];
+
+      // Compute distance if backend didn't supply it
+      if (typeof lat === 'number' && typeof lng === 'number') {
+        list = list.map((b) => {
+          const serverDistance = typeof b.distanceKm === 'number' ? b.distanceKm : null;
+          let distanceKm = serverDistance;
+          if (distanceKm == null) {
+            const [blng, blat] = b?.location?.coordinates || [];
+            if (typeof blat === 'number' && typeof blng === 'number') {
+              distanceKm = haversineDistance(lat, lng, blat, blng);
+            }
+          }
+          return { ...b, distanceKm };
+        });
+
+        // If backend didn't filter, filter on client
+        list = list.filter((b) => (b.distanceKm == null ? true : b.distanceKm <= radius));
+        // Sort by distance
+        list.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+      }
+
       setBarbers(list);
-      setFilteredBarbers(list);
+      setFilteredBarbers(applySearchFilter(list, searchCity));
 
       // stable random ratings per shopId
       setRatings((prev) => {
@@ -59,6 +139,20 @@ const BarbersNearMe = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const changeRadius = (r) => {
+    const val = Math.max(1, Math.min(Number(r) || 5, 50));
+    setRadiusKm(val);
+    if (coords?.lat && coords?.lng) {
+      fetchBarbersByRadius(coords.lat, coords.lng, val);
+    } else {
+      detectLocationAndFetch();
+    }
+  };
+
+  const reDetectLocation = () => {
+    detectLocationAndFetch();
   };
 
   const fetchQueueData = async (shopId) => {
@@ -182,7 +276,7 @@ const BarbersNearMe = () => {
 
   const queuePreview = useMemo(() => computeQueuePreview(queueData), [queueData]);
 
-  if (loading && barbers.length === 0) {
+  if ((loading || detecting) && barbers.length === 0) {
     return (
       <div className="barbers-loading">
         <div className="loading-spinner"></div>
@@ -212,11 +306,71 @@ const BarbersNearMe = () => {
               />
             </div>
           </div>
+
+          {/* Radius Filter */}
+          <div className="radius-panel">
+            <div className="radius-buttons">
+              <button
+                className={`radius-btn ${radiusKm === 5 ? 'active' : ''}`}
+                onClick={() => changeRadius(5)}
+              >
+                5 km
+              </button>
+              <button
+                className={`radius-btn ${radiusKm === 10 ? 'active' : ''}`}
+                onClick={() => changeRadius(10)}
+              >
+                10 km
+              </button>
+              <button
+                className={`radius-btn ${radiusKm === 20 ? 'active' : ''}`}
+                onClick={() => changeRadius(20)}
+              >
+                20 km
+              </button>
+
+              <div className="custom-radius">
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={customRadius}
+                  onChange={(e) => setCustomRadius(Number(e.target.value))}
+                  className="custom-input"
+                  placeholder="Custom"
+                />
+                <button
+                  className="apply-radius-btn"
+                  onClick={() => changeRadius(customRadius || 5)}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <div className="radius-meta">
+              {coords ? (
+                <p>
+                  Showing shops within <strong>{radiusKm} km</strong> of your current location.
+                </p>
+              ) : (
+                <p className="loc-warning">
+                  {locError || 'Location not available.'}{' '}
+                  <button className="link-btn" onClick={reDetectLocation}>
+                    Use my location
+                  </button>
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Results Count */}
         <div className="results-info">
-          <p>{filteredBarbers.length} barber shops found</p>
+          <p>
+            {filteredBarbers.length} barber shops found
+            {coords ? ` within ${radiusKm} km` : ''}
+          </p>
         </div>
 
         {/* Barber Shops Grid */}
@@ -224,7 +378,7 @@ const BarbersNearMe = () => {
           {filteredBarbers.length === 0 ? (
             <div className="no-barbers">
               <h3>No barber shops found</h3>
-              <p>Try searching with different keywords</p>
+              <p>Try changing the radius or search keywords</p>
             </div>
           ) : (
             filteredBarbers.map((barber) => {
@@ -257,6 +411,9 @@ const BarbersNearMe = () => {
                         : 'Available'}
                     </div>
                     <div className="rating-badge">⭐ {shopRating}</div>
+                    {typeof barber.distanceKm === 'number' && (
+                      <div className="distance-badge">📍 {barber.distanceKm} km</div>
+                    )}
                   </div>
 
                   <div className="card-content">
@@ -365,6 +522,11 @@ const BarbersNearMe = () => {
                     <p>
                       <strong>Rating:</strong> ⭐ {ratings[selectedBarber.shopId] || '—'} / 5
                     </p>
+                    {typeof selectedBarber.distanceKm === 'number' && (
+                      <p>
+                        <strong>Distance:</strong> {selectedBarber.distanceKm} km
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -410,7 +572,7 @@ const BarbersNearMe = () => {
                         </div>
                       </div>
 
-                      {/* Queue Preview: last 3 completed, 1 serving, 1 next */}
+                      {/* Queue Preview */}
                       {queuePreview.length > 0 && (
                         <div className="queue-preview">
                           <h4>Queue Preview</h4>

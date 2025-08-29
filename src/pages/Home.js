@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Home.css";
+import { Link } from "react-router-dom";
 
 function Home() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -105,8 +106,13 @@ function Home() {
           </p>
          
           <div className="cta-buttons">
-            <button className="btn btn-primary">Book Now</button>
-            <button className="btn btn-secondary">View Services</button>
+            <Link to={"/barbers-near-me"}>
+              <button className="btn btn-primary">Book Now</button>
+            </Link>
+            <Link to={"/check-status"}>
+                <button className="btn btn-secondary">Track Your Queue</button>
+            </Link>
+            
           </div>
         </div>
        

@@ -23,14 +23,15 @@ const Signup = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      console.log('Sending signup data:', form);
-      const res = await axios.post('/auth/signup', form);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  
+  try {
+    console.log('API URL:', axios.defaults.baseURL); // yeh check kar
+    console.log('Full URL:', `${axios.defaults.baseURL}/auth/signup`);
+    const res = await axios.post('/auth/signup', form);
       console.log('Signup response:', res.data);
       
       // OTP sent successfully
@@ -44,6 +45,7 @@ const Signup = () => {
     setLoading(false);
   };
 
+  
   const handleOTPVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
