@@ -42,6 +42,10 @@ const BarbersNearMe = () => {
   const [queueLoading, setQueueLoading] = useState(false);
   const [ratings, setRatings] = useState({});
 
+  // NEW: Queue data map for all barbers
+  const [queueDataMap, setQueueDataMap] = useState({});
+  const [queueMapLoading, setQueueMapLoading] = useState(false);
+
   const [coords, setCoords] = useState(null); // {lat, lng}
   const [radiusKm, setRadiusKm] = useState(5);
   const [customRadius, setCustomRadius] = useState(5);
@@ -57,6 +61,38 @@ const BarbersNearMe = () => {
     // apply search on the currently loaded (already radius-filtered) barbers
     setFilteredBarbers(applySearchFilter(barbers, searchCity));
   }, [searchCity, barbers]);
+
+  // NEW: Fetch queue data for all filtered barbers
+  useEffect(() => {
+    if (filteredBarbers.length > 0) {
+      fetchAllQueues();
+    }
+  }, [filteredBarbers]);
+
+  // NEW: Function to fetch all queue data
+  const fetchAllQueues = async () => {
+    setQueueMapLoading(true);
+    const queueMap = {};
+    
+    // Fetch in parallel for better performance
+    const promises = filteredBarbers.map(async (barber) => {
+      try {
+        const queue = await fetchQueueData(barber.shopId);
+        return { shopId: barber.shopId, queue };
+      } catch (err) {
+        return { shopId: barber.shopId, queue: [] };
+      }
+    });
+
+    const results = await Promise.all(promises);
+    
+    results.forEach(({ shopId, queue }) => {
+      queueMap[shopId] = queue;
+    });
+
+    setQueueDataMap(queueMap);
+    setQueueMapLoading(false);
+  };
 
   const detectLocationAndFetch = () => {
     setDetecting(true);
@@ -276,6 +312,12 @@ const BarbersNearMe = () => {
 
   const queuePreview = useMemo(() => computeQueuePreview(queueData), [queueData]);
 
+  // NEW: Helper function to get queue count for a specific barber
+  const getQueueCount = (shopId) => {
+    const queue = queueDataMap[shopId] || [];
+    return queue.filter((c) => normalizeStatus(c?.status) === 'waiting').length;
+  };
+
   if ((loading || detecting) && barbers.length === 0) {
     return (
       <div className="barbers-loading">
@@ -360,7 +402,7 @@ const BarbersNearMe = () => {
                     Use my location
                   </button>
                 </p>
-              )}
+                            )}
             </div>
           </div>
         </div>
@@ -440,7 +482,10 @@ const BarbersNearMe = () => {
                       <span className="info-item">
                         🕒 {barber?.timings?.open || '--'} - {barber?.timings?.close || '--'}
                       </span>
-                      <span className="info-item">👥 {barber?.queueCount || 0} in queue</span>
+                      {/* FIXED: Using getQueueCount function instead of queueData */}
+                      <span className="info-item">
+                        👥 {queueMapLoading ? '...' : getQueueCount(barber.shopId)} in queue
+                      </span>
                     </div>
 
                     <div

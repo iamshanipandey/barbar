@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import './JoinQueue.css';
@@ -151,12 +151,14 @@ const JoinQueue = () => {
             </div>
 
             <div className="success-actions">
-              <button 
-                className="track-queue-btn"
-                onClick={() => navigate(`/queue-status/${shopId}`)}
+              <Link to={`/check-status`}>
+                <button className="track-queue-btn"
+                
               >
                 Track Queue Status
               </button>
+              </Link>
+              
               <button 
                 className="back-home-btn"
                 onClick={() => navigate('/barbers-near-me')}
