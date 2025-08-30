@@ -318,6 +318,24 @@ const BarbersNearMe = () => {
     return queue.filter((c) => normalizeStatus(c?.status) === 'waiting').length;
   };
 
+  // NEW: Function to open Google Maps
+  const openGoogleMaps = (barber) => {
+    const [lng, lat] = barber?.location?.coordinates || [];
+    
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      // Direct coordinates URL
+      const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      window.open(mapsUrl, '_blank');
+    } else if (barber?.address && barber?.city) {
+      // Address-based URL
+      const address = encodeURIComponent(`${barber.address}, ${barber.city}`);
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${address}`;
+      window.open(mapsUrl, '_blank');
+    } else {
+      alert('Location information not available for this shop');
+    }
+  };
+
   if ((loading || detecting) && barbers.length === 0) {
     return (
       <div className="barbers-loading">
@@ -376,7 +394,7 @@ const BarbersNearMe = () => {
                   type="number"
                   min="1"
                   max="50"
-                  value={customRadius}
+                                  value={customRadius}
                   onChange={(e) => setCustomRadius(Number(e.target.value))}
                   className="custom-input"
                   placeholder="Custom"
@@ -402,7 +420,7 @@ const BarbersNearMe = () => {
                     Use my location
                   </button>
                 </p>
-                            )}
+              )}
             </div>
           </div>
         </div>
@@ -572,6 +590,31 @@ const BarbersNearMe = () => {
                         <strong>Distance:</strong> {selectedBarber.distanceKm} km
                       </p>
                     )}
+                    
+                    {/* NEW: Get Directions Button */}
+                    <button
+                      className="get-directions-btn"
+                      onClick={() => openGoogleMaps(selectedBarber)}
+                      style={{
+                        marginTop: '15px',
+                        padding: '10px 20px',
+                        backgroundColor: '#4285f4',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        transition: 'background-color 0.3s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#357ae8'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#4285f4'}
+                    >
+                      📍 Get Directions
+                    </button>
                   </div>
                 </div>
 
