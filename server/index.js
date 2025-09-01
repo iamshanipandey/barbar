@@ -12,7 +12,7 @@ connectDB();
 
 // CORS configuration - yeh pehle karo
 app.use(cors({
-  origin: ['https://barber-hrzd.vercel.app', 'http://localhost:3000'], // Multiple origins allow kiye
+  origin: ['https://barber-hrzd.vercel.app', 'http://localhost:3000', 'https://queuecuts.in','www.queuecuts.in'], // Multiple origins allow kiye
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
