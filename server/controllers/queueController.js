@@ -2,6 +2,25 @@ const Queue = require('../models/Queue');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const { io } = require("../index");
+const { sendSMS } = require('../config/twilio'); // Add this import
+
+// Helper function to send notification to next customer
+const notifyNextCustomer = async (queue, shopName) => {
+  try {
+    // Find the next waiting customer
+    const nextCustomer = queue.customers.find(c => c.status === 'waiting');
+    
+    if (nextCustomer && nextCustomer.phone) {
+      const message = `Hello ${nextCustomer.name}! Get ready, you're next in line at ${shopName}. Your token number is ${nextCustomer.token}. Please be prepared!`;
+      
+      await sendSMS(nextCustomer.phone, message);
+      console.log(`SMS notification sent to ${nextCustomer.name} (${nextCustomer.phone})`);
+    }
+  } catch (error) {
+    console.error('Error sending SMS notification:', error);
+    // Don't throw error to prevent disrupting the main flow
+  }
+};
 
 exports.joinQueue = async (req, res) => {
   try {
@@ -31,22 +50,28 @@ exports.joinQueue = async (req, res) => {
       service: serviceId,
       token: newToken,
       status: 'waiting'
-      // user: req.user ? req.user.id : undefined // optional, if login
     });
 
     await queue.save();
+    
+    // Send welcome SMS to the customer
+    const position = queue.customers.filter(c => c.status === 'waiting').length;
+    const welcomeMessage = `Welcome to ${shop.shopName}! Your token number is ${newToken}. You are at position ${position} in the queue. We'll notify you when it's almost your turn.`;
+    await sendSMS(phone, welcomeMessage);
+    
     io.to(shopId).emit('queueUpdated', queue.customers);
     res.status(200).json({ message: 'Joined queue', token: newToken });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 exports.nextCustomer = async (req, res) => {
   try {
     const { shopId } = req.body;
     if (!shopId) return res.status(400).json({ message: 'shopId required' });
     
-    const queue = await Queue.findOne({ shop: shopId });
+    const queue = await Queue.findOne({ shop: shopId }).populate('shop', 'shopName');
     if (!queue) return res.status(404).json({ message: 'Queue not found' });
 
     // Find currently serving customer
@@ -60,6 +85,14 @@ exports.nextCustomer = async (req, res) => {
     if (nextIndex !== -1) {
       queue.customers[nextIndex].status = 'serving';
       await queue.save();
+      
+      // Send SMS to the customer being served
+      const currentCustomer = queue.customers[nextIndex];
+      const currentMessage = `${currentCustomer.name}, it's your turn now at ${queue.shop.shopName}! Please proceed to the counter. Token: ${currentCustomer.token}`;
+      await sendSMS(currentCustomer.phone, currentMessage);
+      
+      // Notify the next waiting customer
+      await notifyNextCustomer(queue, queue.shop.shopName);
       
       // Emit socket event
       io.to(shopId).emit('queueUpdated', queue.customers);
@@ -83,18 +116,46 @@ exports.nextCustomer = async (req, res) => {
   }
 };
 
-exports.getQueue = async (req, res) => {
+// Update markDone function
+exports.markDone = async (req, res) => {
   try {
-    const { shopId } = req.params;
-    const queue = await Queue.findOne({ shop: shopId }).populate('customers.user', 'name email');
+    const { shopId, customerId } = req.body;
+    if (!shopId || !customerId) return res.status(400).json({ message: 'shopId and customerId required' });
+    
+    const queue = await Queue.findOne({ shop: shopId }).populate('shop', 'shopName');
     if (!queue) return res.status(404).json({ message: 'Queue not found' });
-    res.status(200).json({ queue: queue.customers });
+
+    const index = queue.customers.findIndex(c => c._id.toString() === customerId);
+    if (index === -1) return res.status(404).json({ message: 'Customer not found in queue' });
+
+    queue.customers[index].status = 'done';
+
+    // Auto-promote next waiting to serving
+    const nextIdx = queue.customers.findIndex(c => c.status === 'waiting');
+    if (nextIdx !== -1) {
+      queue.customers[nextIdx].status = 'serving';
+      
+      // Send SMS to the customer being served
+      const currentCustomer = queue.customers[nextIdx];
+      const currentMessage = `${currentCustomer.name}, it's your turn now at ${queue.shop.shopName}! Please proceed to the counter. Token: ${currentCustomer.token}`;
+      await sendSMS(currentCustomer.phone, currentMessage);
+    }
+
+    await queue.save();
+    
+    // Notify the next waiting customer (after the one who just got promoted)
+    await notifyNextCustomer(queue, queue.shop.shopName);
+    
+    io.to(shopId).emit('queueUpdated', queue.customers);
+
+    res.status(200).json({ message: 'Customer marked as done' });
   } catch (err) {
+    console.error('markDone error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// POST /api/queue/skip
+// Update skipCustomer to include notifications
 exports.skipCustomer = async (req, res) => {
   try {
     const { shopId, customerId } = req.body;
@@ -102,7 +163,7 @@ exports.skipCustomer = async (req, res) => {
       return res.status(400).json({ message: 'shopId and customerId required' });
     }
 
-    const queue = await Queue.findOne({ shop: shopId });
+    const queue = await Queue.findOne({ shop: shopId }).populate('shop', 'shopName');
     if (!queue) return res.status(404).json({ message: 'Queue not found' });
 
     const index = queue.customers.findIndex(c => c._id.toString() === customerId);
@@ -118,10 +179,19 @@ exports.skipCustomer = async (req, res) => {
       const nextIdx = queue.customers.findIndex(c => c.status === 'waiting');
       if (nextIdx !== -1) {
         queue.customers[nextIdx].status = 'serving';
+        
+        // Send SMS to the new serving customer
+        const currentCustomer = queue.customers[nextIdx];
+        const currentMessage = `${currentCustomer.name}, it's your turn now at ${queue.shop.shopName}! Please proceed to the counter. Token: ${currentCustomer.token}`;
+        await sendSMS(currentCustomer.phone, currentMessage);
       }
     }
 
     await queue.save();
+    
+    // Notify the next waiting customer
+    await notifyNextCustomer(queue, queue.shop.shopName);
+    
     io.to(shopId).emit('queueUpdated', queue.customers);
 
     return res.status(200).json({ message: 'Customer removed from queue' });
@@ -131,7 +201,7 @@ exports.skipCustomer = async (req, res) => {
   }
 };
 
-// POST /api/queue/move-to-last
+// Update moveToLast to include notifications
 exports.moveToLast = async (req, res) => {
   try {
     const { shopId, customerId } = req.body;
@@ -139,7 +209,7 @@ exports.moveToLast = async (req, res) => {
       return res.status(400).json({ message: 'shopId and customerId required' });
     }
 
-    const queue = await Queue.findOne({ shop: shopId });
+    const queue = await Queue.findOne({ shop: shopId }).populate('shop', 'shopName');
     if (!queue) return res.status(404).json({ message: 'Queue not found' });
 
     const index = queue.customers.findIndex(c => c._id.toString() === customerId);
@@ -157,6 +227,10 @@ exports.moveToLast = async (req, res) => {
 
     queue.customers.push(moved);
 
+    // Send SMS to the moved customer
+    const movedMessage = `${moved.name}, you've been moved to the end of the queue at ${queue.shop.shopName}. Your new token is ${moved.token}. We'll notify you when it's your turn.`;
+    await sendSMS(moved.phone, movedMessage);
+
     // If we moved the serving one, promote the next waiting (not the moved one)
     if (wasServing) {
       const nextIdx = queue.customers.findIndex(
@@ -164,10 +238,19 @@ exports.moveToLast = async (req, res) => {
       );
       if (nextIdx !== -1) {
         queue.customers[nextIdx].status = 'serving';
+        
+        // Send SMS to the new serving customer
+        const currentCustomer = queue.customers[nextIdx];
+        const currentMessage = `${currentCustomer.name}, it's your turn now at ${queue.shop.shopName}! Please proceed to the counter. Token: ${currentCustomer.token}`;
+        await sendSMS(currentCustomer.phone, currentMessage);
       }
     }
 
     await queue.save();
+    
+    // Notify the next waiting customer
+    await notifyNextCustomer(queue, queue.shop.shopName);
+    
     io.to(shopId).emit('queueUpdated', queue.customers);
 
     return res.status(200).json({ message: 'Customer moved to last' });
@@ -176,7 +259,19 @@ exports.moveToLast = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-// Cancel queue for customer (remove self from queue)
+
+// Keep other functions as they are...
+exports.getQueue = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const queue = await Queue.findOne({ shop: shopId }).populate('customers.user', 'name email');
+    if (!queue) return res.status(404).json({ message: 'Queue not found' });
+    res.status(200).json({ queue: queue.customers });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 exports.cancelQueue = async (req, res) => {
   try {
     const { shopId } = req.body;
@@ -201,7 +296,6 @@ exports.cancelQueue = async (req, res) => {
   }
 };
 
-// Add this function to your queue controller
 exports.checkQueueStatus = async (req, res) => {
   try {
     const { phone } = req.params;
@@ -232,7 +326,7 @@ exports.checkQueueStatus = async (req, res) => {
       return res.status(404).json({ message: 'Customer not found in queue' });
     }
 
-    // Find currently serving customer
+        // Find currently serving customer
     const currentlyServing = queue.customers.find(c => c.status === 'serving');
     const currentServingToken = currentlyServing ? currentlyServing.token : null;
 
@@ -293,7 +387,7 @@ exports.getQueueHistory = async (req, res) => {
 
     const queues = await Queue.find({
       'customers.phone': phone
-    }).populate('shop', 'name address').sort({ updatedAt: -1 });
+    }).populate('shop', 'shopName address').sort({ updatedAt: -1 });
 
     const history = [];
     
@@ -301,7 +395,7 @@ exports.getQueueHistory = async (req, res) => {
       const customerEntries = queue.customers.filter(c => c.phone === phone);
       customerEntries.forEach(customer => {
         history.push({
-          shopName: queue.shop.name,
+          shopName: queue.shop.shopName,
           shopAddress: queue.shop.address,
           token: customer.token,
           status: customer.status,
@@ -315,36 +409,6 @@ exports.getQueueHistory = async (req, res) => {
 
   } catch (err) {
     console.error('Error in getQueueHistory:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-// POST /api/queue/mark-done
-exports.markDone = async (req, res) => {
-  try {
-    const { shopId, customerId } = req.body;
-    if (!shopId || !customerId) return res.status(400).json({ message: 'shopId and customerId required' });
-    
-    const queue = await Queue.findOne({ shop: shopId });
-    if (!queue) return res.status(404).json({ message: 'Queue not found' });
-
-    const index = queue.customers.findIndex(c => c._id.toString() === customerId);
-    if (index === -1) return res.status(404).json({ message: 'Customer not found in queue' });
-
-    queue.customers[index].status = 'done';
-
-    // Optionally, auto-promote next waiting to serving when current serving is done
-    const nextIdx = queue.customers.findIndex(c => c.status === 'waiting');
-    if (nextIdx !== -1) {
-      queue.customers[nextIdx].status = 'serving';
-    }
-
-    await queue.save();
-    io.to(shopId).emit('queueUpdated', queue.customers);
-
-    res.status(200).json({ message: 'Customer marked as done' });
-  } catch (err) {
-    console.error('markDone error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

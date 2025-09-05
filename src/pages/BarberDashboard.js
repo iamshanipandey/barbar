@@ -410,14 +410,14 @@ const BarberDashboard = () => {
                 >
                   ✅ Done
                 </button>
-                <button 
+                {/* <button 
                   className="action-btn-small move-btn"
                   onClick={() => handleMoveToLast(customer)}
                   disabled={actionLoading}
                   title="Move to Last"
                 >
                   ↓ Move
-                </button>
+                </button> */}
                 <button 
                   className="action-btn-small remove-btn"
                   onClick={() => handleRemoveCustomer(customer)}
