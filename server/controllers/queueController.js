@@ -2,7 +2,7 @@ const Queue = require('../models/Queue');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const { io } = require("../index");
-const { sendSMS } = require('../config/twilio'); // Add this import
+const { sendSMS } = require('../config/twilio');
 
 // Helper function to send notification to next customer
 const notifyNextCustomer = async (queue, shopName) => {
@@ -11,7 +11,7 @@ const notifyNextCustomer = async (queue, shopName) => {
     const nextCustomer = queue.customers.find(c => c.status === 'waiting');
     
     if (nextCustomer && nextCustomer.phone) {
-      const message = `Hello ${nextCustomer.name}! Get ready, you're next in line at ${shopName}. Your token number is ${nextCustomer.token}. Please be prepared!`;
+      const message = `Hello ${nextCustomer.name}! Get ready, you're next in line at ${shopName}. Your token number is ${nextCustomer.token}. Please be ready!`;
       
       await sendSMS(nextCustomer.phone, message);
       console.log(`SMS notification sent to ${nextCustomer.name} (${nextCustomer.phone})`);
@@ -53,11 +53,6 @@ exports.joinQueue = async (req, res) => {
     });
 
     await queue.save();
-    
-    // Send welcome SMS to the customer
-    const position = queue.customers.filter(c => c.status === 'waiting').length;
-    const welcomeMessage = `Welcome to ${shop.shopName}! Your token number is ${newToken}. You are at position ${position} in the queue. We'll notify you when it's almost your turn.`;
-    await sendSMS(phone, welcomeMessage);
     
     io.to(shopId).emit('queueUpdated', queue.customers);
     res.status(200).json({ message: 'Joined queue', token: newToken });
